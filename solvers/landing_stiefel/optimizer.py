@@ -51,7 +51,7 @@ def _landing_direction(point, grad, lambda_regul):
     return (rel_grad, norm_dir, distance_norm)
 
 
-class LandingSCCA(OptimMixin, torch.optim.Optimizer):
+class LandingGeneralizedStiefel(OptimMixin, torch.optim.Optimizer):
     r"""
     Landing algorithm on the Stiefel manifold with the same API as
     :class:`torch.optim.SGD`.

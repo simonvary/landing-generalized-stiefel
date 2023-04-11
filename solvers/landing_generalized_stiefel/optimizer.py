@@ -7,7 +7,7 @@ import torch.nn.functional as f
 
 class LandingGeneralizedStiefel(torch.optim.Optimizer):
     r"""
-    Landing algorithm on the generalized Stiefel manifold with the same API as
+    Generalized Landing algorithm on the generalized Stiefel manifold with the same API as
     :class:`torch.optim.SGD`.
 
     Parameters
@@ -84,6 +84,10 @@ class LandingGeneralizedStiefel(torch.optim.Optimizer):
         super().__init__(params, defaults)
 
     def step(self, regul_groups):
+        '''
+            regul_groups is a list of lists corresponding to param_groups[group]["params"] = regul_groups[group]=
+            regul_group has either square or rectangular matrix
+        '''
         loss = None
         with torch.no_grad():
             for (param_group, regul_group) in zip(self.param_groups, regul_groups):
@@ -93,8 +97,6 @@ class LandingGeneralizedStiefel(torch.optim.Optimizer):
                 nesterov = param_group["nesterov"]
                 learning_rate = param_group["lr"]
                 lambda_regul = param_group["lambda_regul"]
-                normalize_columns = param_group["normalize_columns"]
-                safe_step = param_group["safe_step"]
                 for point, point_regul in zip(param_group["params"], regul_group):
                     grad = point.grad
                     if grad is None:
@@ -113,12 +115,14 @@ class LandingGeneralizedStiefel(torch.optim.Optimizer):
 
                     # If orthogonalization is applied
                     if lambda_regul>0:
-                        *_, p = point.shape
+                        n1, p = point.shape
+                        b, n2 = point_regul.shape
+                        # we should have n2==n1
                         Id = torch.eye(p, device=point.device)
-                        Bx = torch.matmul(point_regul, point)
-                        xtBx = torch.matmul(point.T, Bx)
-                        normal_direction = torch.matmul(Bx, xtBx - Id)
-                        relative_gradient = torch.matmul(grad, Bx.T@ Bx) - torch.matmul(Bx, grad.T @ Bx)
+                        Ax = point_regul @ point
+                        xtAx = point.T@Ax
+                        normal_direction = Ax@(xtAx - Id)
+                        relative_gradient = 0.5*(grad@(Ax.T@Ax) - Ax@(grad.T @ Ax))
                         # Take the step with orthogonalization
                         new_point = point - learning_rate * (relative_gradient + lambda_regul * normal_direction)
                     else: 

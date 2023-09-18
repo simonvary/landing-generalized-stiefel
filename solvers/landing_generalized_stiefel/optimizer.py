@@ -20,6 +20,8 @@ def sylvester(A, B, C, X=None):
     return X.real if all(torch.isreal(x.flatten()[0]) 
                 for x in [A, B, C]) else X
 
+def symm(x):
+    return 0.5*(x+x.T)
 
 class LandingGeneralizedStiefel(torch.optim.Optimizer):
     r"""
@@ -66,7 +68,8 @@ class LandingGeneralizedStiefel(torch.optim.Optimizer):
         normalize_columns=False,
         safe_step=0.5,
         grad_type='precon',
-        check_type=False
+        check_type=False,
+        regul_type='matvec' # either matrix or matvec
     ):
         if lr < 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))
@@ -90,7 +93,8 @@ class LandingGeneralizedStiefel(torch.optim.Optimizer):
             normalize_columns=normalize_columns,
             safe_step=safe_step,
             check_type=check_type,
-            grad_type=grad_type
+            grad_type=grad_type,
+            regul_type=regul_type
         )
 
         if nesterov and (momentum <= 0 or dampening != 0):
@@ -115,8 +119,9 @@ class LandingGeneralizedStiefel(torch.optim.Optimizer):
                 learning_rate = param_group["lr"]
                 omega = param_group["omega"]
                 grad_type = param_group["grad_type"]
-
-                for x, Bx in zip(param_group["params"], regul_group):
+                regul_type = param_group["regul_type"]
+                
+                for x, regul in zip(param_group["params"], regul_group):
                     grad = x.grad
                     if grad is None:
                         continue
@@ -136,18 +141,21 @@ class LandingGeneralizedStiefel(torch.optim.Optimizer):
                     if omega>0:
                         n, p = x.shape
                         Id = torch.eye(p, device=x.device)
+                        if regul_type == 'matvec':
+                            Bx = regul
+                        elif regul_type == 'matrix':
+                            B = regul
+                            Bx = B@x
+                        else:
+                            print('Unknown regul_type=', regul_type)
                         xtBx = x.T@Bx
                         normal_direction = Bx@(xtBx - Id)
                         if grad_type == 'precon':
                             relative_gradient = 0.5*(grad@(xtBx) - Bx@(grad.T @ Bx))
-                        elif grad_type == 'riem':
-                            '''The following does not work and returns NaNs'''
-                            gradTBx = grad.T@Bx
-                            xtB2x = Bx.T@ Bx + 1e-3*torch.eye(Bx.size(1),device = Bx.device)
-                            print(xtB2x)
-                            print(gradTBx)
-                            grad_projected = 2*Bx@sylvester(xtB2x,xtB2x, gradTBx+gradTBx.T)
-                            relative_gradient = grad - grad_projected
+                        elif regul_type == 'matrix' and grad_type == 'riem':
+                            B_reg = B + 1e-3*torch.eye(B.size(0), device=B.device)
+                            grad_scaled = torch.linalg.solve(B_reg, grad)
+                            relative_gradient = grad_scaled - x@symm(x.T @ grad)
                         landing_direction = relative_gradient + omega * normal_direction
                         # Take the step with orthogonalization
                         new_x = x - learning_rate * landing_direction

@@ -93,8 +93,6 @@ class GeneralizedLanding(IterativeSolver):
             elif grad_type == 'riem':
                 egrad_scaled = cp.linalg.solve(self.B, egrad)
                 relative_gradient = egrad_scaled - x@symm(x.T @ egrad)
-            elif grad_type == 'precon2':
-                relative_gradient = .5*(egrad@(x.T@Bx) - x@ (egrad.T @ Bx))
             landing_direction = relative_gradient + omega * normal_direction
 
             if step_type == 'fixed':

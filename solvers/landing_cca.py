@@ -32,9 +32,10 @@ def LandingCCA(loaderA, loaderB, p = 10, learning_rate = 1e-3, omega = 1,  n_epo
 
     x = torch.nn.Parameter(x0).to(device)
     y = torch.nn.Parameter(y0).to(device)
+    Id =  torch.eye(p,p, device = device)
 
-    print('Dist X: %2.5f' % (torch.linalg.norm( x.T @ covA @ x - torch.eye(p,p, device = device)).item() ))
-    print('Dist X: %2.5f' % (torch.linalg.norm( y.T @ covB @ y - torch.eye(p,p, device = device)).item() ))
+    print('Dist X: %2.5f' % (torch.linalg.norm(x.T@covA@x-Id).item() ))
+    print('Dist X: %2.5f' % (torch.linalg.norm(y.T@covB@y-Id).item() ))
     
     optimizerCCA = LandingGeneralizedStiefel((x,y), lr=learning_rate, omega=omega,grad_type=grad_type)
     
@@ -61,11 +62,11 @@ def LandingCCA(loaderA, loaderB, p = 10, learning_rate = 1e-3, omega = 1,  n_epo
         objective_sum = -torch.trace( x.T @ covAB @ y).item()
         
         out['objective'].append(objective_sum)
-        out['distanceX'].append(torch.linalg.norm( x.T @ covA @ x - torch.eye(p,p, device = device)).item())
-        out['distanceY'].append(torch.linalg.norm(y.T @ covB @ y - torch.eye(p,p, device = device)).item())
+        out['distanceX'].append(torch.linalg.norm(x.T@covA@x-Id).item())
+        out['distanceY'].append(torch.linalg.norm(y.T@covB@y-Id).item())
 
         print('Objective: %2.5f' % objective_sum)
-        print('Dist X: %2.5f' % (torch.linalg.norm( x.T @ covA @ x - torch.eye(p,p, device = device)).item() ))
-        print('Dist Y: %2.5f' % (torch.linalg.norm(y.T @ covB @ y - torch.eye(p,p, device = device)).item()) )
+        print('Dist X: %2.5f' % (torch.linalg.norm(x.T@covA@x-Id).item()))
+        print('Dist Y: %2.5f' % (torch.linalg.norm(y.T@covB@y-Id).item()) )
         scheduler.step()
     return(x.detach(), y.detach(), out)

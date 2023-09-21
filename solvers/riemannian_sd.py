@@ -36,7 +36,7 @@ class RiemmGeneralizedStiefel(IterativeSolver):
     
     def _retraction(self, B, x, v, check_tol=1e-10):
         a = x + v
-        r = np.linalg.cholesky(a.T @ B @ a)
+        r = cp.linalg.cholesky(a.T @ B @ a)
         return cp.linalg.solve(r, a.T).T
 
     def _line_search(self, B, x, direction, eta, df0, gamma = 1e-2, tau = 1e-1, max_iter = 25):

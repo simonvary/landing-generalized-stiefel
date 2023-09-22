@@ -1,5 +1,9 @@
 import numpy as np
 
+import torch
+import torchvision
+import torchvision.transforms as transforms
+
 def compute_mean_std(loader):
     mean = 0.
     std = 0.
@@ -26,3 +30,34 @@ def generate_spd(n, type='equidistant', cond_number = 1e2):
     else:
         evals = None
     return(evals, Q, Q@np.diag(evals)@Q.T)
+
+def dataset_MNIST(batch_size = 256, download=True):
+    '''
+        Returns two dataloaders of MNIST with prescribed batch_size.
+        Each returns different halves of the image, split vertically
+        in the middle.
+    '''
+    transform = transforms.Compose(
+    [transforms.ToTensor(),
+    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
+    transform_MNIST = transforms.Compose([transforms.ToTensor(),
+                                transforms.Normalize((0.5,), (0.5,)),
+                                ])
+    trainset_MNIST = torchvision.datasets.MNIST(root='data', download=download, train=True, transform=transform_MNIST)
+
+    def VectorizeLeftImage(batch):
+        data = [item[0][:,:,:14].reshape(-1).unsqueeze(0) for item in batch]
+        return(torch.cat(data, dim = 0))
+
+    def VectorizeRightImage(batch):
+        data = [item[0][:,:,14:].reshape(-1).unsqueeze(0) for item in batch]
+        return(torch.cat(data, dim = 0))
+
+    loader_left = torch.utils.data.DataLoader(trainset_MNIST,
+                        batch_size=batch_size, shuffle=False, 
+                        num_workers=2, collate_fn=VectorizeLeftImage)
+    loader_right = torch.utils.data.DataLoader(trainset_MNIST,
+                        batch_size=batch_size, shuffle=False, 
+                        num_workers=2, collate_fn=VectorizeRightImage)
+    return(loader_left, loader_right)

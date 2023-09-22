@@ -5,7 +5,7 @@ import torch
 from solvers import LandingGeneralizedStiefel
 from solvers import compute_mean_std,loader_to_cov
 
-def LandingCCA(loaderA, loaderB, p = 10, learning_rate = 1e-3, omega = 1,  n_epochs=10, device = 'cpu', eps = 0, grad_type = 'precon'):
+def LandingCCA(loaderA, loaderB, p = 10, learning_rate = 1e-3, omega = 1,  n_epochs=10, device = 'cpu', eps = 0, grad_type = 'precon',regul_type='matvec'):
     ''' Takes two iter objects that return matrices that return the same number of batches'''
 
     meanA,_ = compute_mean_std(loaderA)
@@ -37,9 +37,10 @@ def LandingCCA(loaderA, loaderB, p = 10, learning_rate = 1e-3, omega = 1,  n_epo
     print('Dist X: %2.5f' % (torch.linalg.norm(x.T@covA@x-Id).item() ))
     print('Dist X: %2.5f' % (torch.linalg.norm(y.T@covB@y-Id).item() ))
     
-    optimizerCCA = LandingGeneralizedStiefel((x,y), lr=learning_rate, omega=omega,grad_type=grad_type)
+    optimizerCCA = LandingGeneralizedStiefel((x,y), lr=learning_rate, omega=omega,grad_type=grad_type,regul_type=regul_type)
     
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizerCCA, milestones=[100,125], gamma=0.1)
+    #scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizerCCA, milestones=[100,125], gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizerCCA, milestones=[40,60,70], gamma=0.1)
 
     out = {'objective': [],
            'distanceX': [],
@@ -55,18 +56,22 @@ def LandingCCA(loaderA, loaderB, p = 10, learning_rate = 1e-3, omega = 1,  n_epo
             n_batch =  A.size(0)
             Ax = A @ x
             By = B @ y
-            objective = -(torch.trace( Ax.T @ By) / n_batch).to(device)
+            objective = -.5*(torch.trace( Ax.T @ By) / n_batch).to(device)
             optimizerCCA.zero_grad()
             objective.backward()
-            optimizerCCA.step(((A.T@Ax/n_batch, B.T@By/n_batch),))
-        objective_sum = -torch.trace( x.T @ covAB @ y).item()
+            if grad_type == 'precon':
+                optimizerCCA.step(((A.T@Ax/n_batch, B.T@By/n_batch),))
+            elif grad_type == 'PhiB':
+                optimizerCCA.step(((A.T@A/n_batch, B.T@B/n_batch),))
+        objective_sum = -.5*torch.trace( x.T @ covAB @ y).item()
         
         out['objective'].append(objective_sum)
-        out['distanceX'].append(torch.linalg.norm(x.T@covA@x-Id).item())
-        out['distanceY'].append(torch.linalg.norm(y.T@covB@y-Id).item())
+        out['distanceX'].append((torch.linalg.norm(x.T@covA@x-Id)**2).item())
+        out['distanceY'].append((torch.linalg.norm(y.T@covB@y-Id)**2).item())
 
+        print('Epoch: %d' % epoch)
         print('Objective: %2.5f' % objective_sum)
-        print('Dist X: %2.5f' % (torch.linalg.norm(x.T@covA@x-Id).item()))
-        print('Dist Y: %2.5f' % (torch.linalg.norm(y.T@covB@y-Id).item()) )
+        print('Dist X: %2.5f' % ((torch.linalg.norm(x.T@covA@x-Id)**2).item()))
+        print('Dist Y: %2.5f' % ((torch.linalg.norm(y.T@covB@y-Id)**2).item()) )
         scheduler.step()
     return(x.detach(), y.detach(), out)

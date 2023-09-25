@@ -44,7 +44,7 @@ def dataset_MNIST(batch_size = 256, download=True):
     transform_MNIST = transforms.Compose([transforms.ToTensor(),
                                 transforms.Normalize((0.5,), (0.5,)),
                                 ])
-    trainset_MNIST = torchvision.datasets.MNIST(root='data', download=download, train=True, transform=transform_MNIST)
+    trainset_MNIST = torchvision.datasets.MNIST(root='../data', download=download, train=True, transform=transform_MNIST)
 
     def VectorizeLeftImage(batch):
         data = [item[0][:,:,:14].reshape(-1).unsqueeze(0) for item in batch]

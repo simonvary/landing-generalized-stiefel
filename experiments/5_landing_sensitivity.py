@@ -1,3 +1,5 @@
+# To check the sensitivity of the landing method for different choices of omega
+
 """
 Comparison of solving GEVP with RiemannianSD vs Landing
 Deterministic experiment using cupy on GPU
@@ -8,6 +10,7 @@ import random
 import pickle
 
 import matplotlib.pyplot as plt
+from itertools import product
 
 import numpy as np
 import cupy as cp
@@ -27,13 +30,21 @@ cp.random.seed(seed)
 np.random.seed(seed)
 random.seed(seed)
 
-filename = '1_gevp.pkl'
+filename = '5_gevp_landing_sensitivity.pkl'
 
 n = 1000
 p = 500
 
-max_time = 2*60 # in seconds
+max_time = 40 # in seconds
 maxiter = 20000
+omega_var_max = .75
+eta_var_max = 0.75
+n_omega = 4
+n_eta = 4
+#omega_vars = np.linspace(1-omega_var_max, 1+omega_var_max, num=n_omega)
+omega_vars = [1/8, 1/4, 1/2 , 1, 2, 4, 8]
+eta_vars = [1/8, 1/4, 1/2 , 1, 2, 4, 8]
+#eta_vars = np.linspace(1-eta_var_max, 1+eta_var_max, num=n_omega)
 
 cond_number = 1e2
 
@@ -54,32 +65,23 @@ print(eigvals[0])
 x0,_ = np.linalg.qr(np.random.randn(n,p))
 r = np.linalg.cholesky(x0.T @ B @ x0)
 x0 = np.linalg.solve(r, x0.T).T
+omega = .1
+eta = 100
+optlogs = []
 
+for i, (eta_var, omega_var) in enumerate(product(eta_vars, omega_vars)):
+       optlogs.append({})            
+       solver_land_precon = GeneralizedLanding(A, B, p, maxiter = maxiter, mingradnorm=1e-6,maxtime=max_time)
+       x_land_precon, optlog_land_precon = solver_land_precon.solve(eta*eta_var, omega*omega_var, grad_type='precon', x0=x0, step_type='fixed')
+       optlogs[i]['land_precon'] = optlog_land_precon
+       optlogs[i]['land_precon_omega'] = omega*omega_var
+       optlogs[i]['land_precon_eta'] = eta*eta_var
 
-solver_land_R = GeneralizedLanding(A, B, p, maxiter = maxiter, mingradnorm=1e-6,maxtime=max_time)
-x_land_R, optlog_land_R = solver_land_R.solve(0.001, 17000, grad_type='R', x0=x0, step_type='fixed', eps_d = 1)
-
-solver_land_precon = GeneralizedLanding(A, B, p, maxiter = maxiter, mingradnorm=1e-6,maxtime=max_time)
-x_land_precon, optlog_land_precon = solver_land_precon.solve(170, 0.1, grad_type='precon', x0=x0, step_type='fixed', eps_d = 1)
-
-solver_plam = GeneralizedLanding(A, B, p, maxiter = maxiter, mingradnorm=1e-6,maxtime=max_time)
-x_plam, optlog_plam = solver_plam.solve(.05, 200, grad_type='plam', x0=x0, eps_d = None, step_type='fixed')
-
-solver_rsd = RiemmGeneralizedStiefel(A, B, p, maxiter = maxiter, mingradnorm=1e-6,maxtime=max_time)
-x_rsd, optlog_rsd = solver_rsd.solve(eta = .001, step_type = 'fixed', x0=x0)
-
-solver_land_riem = GeneralizedLanding(A, B, p, maxiter = maxiter, mingradnorm=1e-6,maxtime=max_time)
-x_land_riem, optlog_land_riem = solver_land_riem.solve(.001, 1, grad_type='riem', x0=x0, step_type='fixed', eps_d = 1)
-
-
-
+       optlogs[i]['omega_var'] = omega_var
+       optlogs[i]['eta_var'] = eta_var 
 
 results = {
-        'optlog_land_precon' : optlog_land_precon,
-        'optlog_rsd' : optlog_rsd,
-        'optlog_land_R' : optlog_land_R,
-        'optlog_plam' : optlog_plam,
-        'optlog_land_riem' : optlog_land_riem,
+        'optlogs' : optlogs,
         'obj_true' : obj_true
 }
 

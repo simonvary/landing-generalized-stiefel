@@ -61,13 +61,15 @@ class GeneralizedLanding(IterativeSolver):
             eta = 2*eta    
         return (x_new, f_new, eta, it)
     
-    def _safe_step_size(d, g, lambda_regul, eps_d):
-        beta = lambda_regul * d * (d-1)
-        alpha = g**2
-        sol = (- beta + cp.sqrt(beta**2 - alpha * (d - eps_d)))/alpha
-        return sol
+    def _safe_step_size(self, d, n, l, omega, Ln, eps_d):
+        '''
+        Computes the safe step-size bound from Lemma 2.4
+        '''
+        # compute the discriminant
+        D = max(omega**2 * n**4 + Ln*(l**2)*(eps_d**2 - d**2), 0)
+        return ( omega*n**2 + cp.sqrt(D) ) / ( Ln*(l**2) )
 
-    def solve(self, eta, omega, safe_step = None, grad_type = 'precon', step_type = 'fixed', x0=None):
+    def solve(self, eta, omega, eps_d = 1, grad_type = 'precon', step_type = 'fixed', x0=None):
         """
         """
 
@@ -77,7 +79,13 @@ class GeneralizedLanding(IterativeSolver):
             x = x0.copy()
         x = cp.asarray(x)
 
-        self._start_optlog(extraiterfields = ['gradnorm', 'distance'])
+        eigs = cp.linalg.eigvalsh(self.B)
+        kappa = cp.abs(eigs[0]) / cp.abs(eigs[-1])
+        if eps_d:
+            Ln = eigs[0]*eps_d + 2*(1+eps_d)*kappa
+        
+        self._start_optlog(extraiterfields = ['gradnorm', 'distance', 'safe_step'])
+
         iter_n = 0
 
         # Iter_n append
@@ -93,14 +101,22 @@ class GeneralizedLanding(IterativeSolver):
             elif grad_type == 'riem':
                 egrad_scaled = cp.linalg.solve(self.B, egrad)
                 relative_gradient = egrad_scaled - x@symm(x.T @ egrad)
+            elif grad_type == 'R':
+                egrad_scaled = cp.linalg.solve(self.B, egrad)
+                relative_gradient = egrad_scaled@xtBx - x@(egrad.T@x)
+            elif grad_type == 'plam':
+                relative_gradient = egrad - 0.5*Bx@(x.T@egrad + egrad.T@x)
             landing_direction = relative_gradient + omega * normal_direction
 
             if step_type == 'fixed':
-                if safe_step:
-                    d = distance
-                    g = cp.linalg.norm(landing_direction)
-                    max_step = self._safe_step_size(d, g, omega, safe_step)
-                    eta = cp.max(eta, max_step)
+                if eps_d:
+                    d = cp.linalg.norm(xtBx - self.Id)
+                    n = cp.linalg.norm(normal_direction)
+                    l = cp.linalg.norm(landing_direction)
+                    safe_step = self._safe_step_size( d, n, l, omega, Ln, eps_d)
+                    #eta = min(eta, safe_step)
+                else:
+                    safe_step = 0
                 x = x - eta*landing_direction
             elif step_type == 'lsearch':
                 df0 = cp.inner(-landing_direction.flatten(),egrad.flatten())
@@ -110,11 +126,11 @@ class GeneralizedLanding(IterativeSolver):
             objective_value = self.objective(x)
             distance = self.constraint(x)
             
-            print('Iteration %d, Objective: %2.2f Distance: %2.2e' % (iter_n, objective_value, distance) )
+            print('Iteration %d, Objective: %2.2f Distance: %2.2e Safe-step: %2.2e' % (iter_n, objective_value, distance, safe_step) )
             running_time = time.time() - time0
 
             if self._logverbosity >= 1:
-                self._append_optlog(iter_n, running_time, objective_value, gradnorm=gradnorm, xdist=None, distance = distance)
+                self._append_optlog(iter_n, running_time, objective_value, gradnorm=gradnorm, xdist=None, distance = distance, safe_step = safe_step)
 
             stop_reason = self._check_stopping_criterion(
                 running_time, iter=iter_n, objective_value=objective_value, stepsize=eta, gradnorm=gradnorm)

@@ -4,6 +4,8 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 
+from scipy.linalg import sqrtm
+
 def compute_mean_std(loader):
     mean = 0.
     std = 0.
@@ -15,6 +17,30 @@ def compute_mean_std(loader):
     mean /= len(loader.dataset)
     std /= len(loader.dataset)
     return(mean, std)
+
+def amari_distance(W, A):
+    """
+    Source: 
+       https://pierreablin.github.io/ksddescent/auto_examples/plot_ica.html
+    Computes the Amari distance between two matrices W and A.
+    It cancels when WA is a permutation and scale matrix.
+    Parameters
+    ----------
+    W : ndarray, shape (n_features, n_features)
+        Input matrix
+    A : ndarray, shape (n_features, n_features)
+        Input matrix
+    Returns
+    -------
+    d : float
+        The Amari distance
+    """
+    P = np.dot(W, A)
+
+    def s(r):
+        return np.sum(np.sum(r ** 2, axis=1) / np.max(r ** 2, axis=1) - 1)
+
+    return (s(np.abs(P)) + s(np.abs(P.T))) / (2 * P.shape[0])
 
 def generate_spd(n, type='equidistant', cond_number = 1e2):
     Q,_ = np.linalg.qr(np.random.randn(n,n))
@@ -31,6 +57,22 @@ def generate_spd(n, type='equidistant', cond_number = 1e2):
         evals = None
     return(evals, Q, Q@np.diag(evals)@Q.T)
 
+def dataset_simulated_ica(n_samples = 10000, n_features = 10, batch_size=128, device = 'cpu', random_state=42):
+    rng = np.random.RandomState(random_state)
+    sources = rng.laplace(size=(n_samples, n_features))
+    mixing = rng.randn(n_features, n_features)
+    X = np.dot(sources, mixing.T)
+    W = np.linalg.pinv(sqrtm(X.T.dot(X) / n_samples))
+    X = np.dot(X, W.T)
+    mixing = np.dot(W, mixing)
+    data = dict(X=X, mixing=mixing)
+    X = torch.from_numpy(X).to(device=device)
+    mixing = torch.from_numpy(mixing).to(device=device)
+    dataset = torch.utils.data.TensorDataset(X)
+    dataloader = torch.utils.data.DataLoader(dataset,
+                        batch_size=batch_size, shuffle=False)
+    return dict(dataloader=dataloader, mixing=mixing)
+    
 def dataset_MNIST(batch_size = 256, download=True):
     '''
         Returns two dataloaders of MNIST with prescribed batch_size.

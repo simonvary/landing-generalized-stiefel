@@ -4,7 +4,7 @@ import torch
 from solvers import LandingGeneralizedStiefel
 from solvers import compute_mean_std,loader_to_cov
 
-def LandingCCA(loaderA, loaderB, p = 10, learning_rate = 1e-3, omega = 1,  n_epochs=10, device = 'cpu', eps = 0, grad_type = 'precon',regul_type='matvec', averaging=False, per_epoch_log=True, lr_milestones=[40,60,80]):
+def LandingCCA(loaderA, loaderB, p = 10, learning_rate = 1e-3, omega = 1,  n_epochs=10, device = 'cpu', grad_type = 'precon',regul_type='matvec', averaging=False, per_epoch_log=True, lr_milestones=[40,60,80]):
     ''' Takes two iter objects that return matrices that return the same number of batches'''
 
     meanA,_ = compute_mean_std(loaderA)

@@ -68,6 +68,7 @@ class LandingGeneralizedStiefel(torch.optim.Optimizer):
         normalize_columns=False,
         safe_step=0.5,
         grad_type='precon',
+        eps_regul = 0,
         check_type=False,
         regul_type='matvec' # either matrix or matvec
     ):
@@ -92,6 +93,7 @@ class LandingGeneralizedStiefel(torch.optim.Optimizer):
             omega=omega,
             normalize_columns=normalize_columns,
             safe_step=safe_step,
+            eps_regul = eps_regul,
             check_type=check_type,
             grad_type=grad_type,
             regul_type=regul_type
@@ -137,31 +139,33 @@ class LandingGeneralizedStiefel(torch.optim.Optimizer):
                             state["momentum_buffer"] = grad.clone()
                     grad.add_(x, alpha=weight_decay)
 
+                    # precompute stuff
+                    n, p = x.shape
+                    Id = torch.eye(p, device=x.device)
+                    if regul_type == 'matvec':
+                        Bx = regul
+                    elif regul_type == 'matrix':
+                        B = regul
+                        Bx = B@x
+                    else:
+                        print('Unknown regul_type=', regul_type)
+                    xtBx = x.T@Bx
+                    normal_direction = Bx@(xtBx - Id)
+                    if grad_type == 'precon':
+                        relative_gradient = 0.5*(grad@(Bx.T@Bx) - Bx@(grad.T @ Bx))
+                    elif regul_type == 'matrix' and grad_type == 'PhiB':
+                        B_reg = B + eps_regul*torch.eye(B.size(0), device=B.device)
+                        grad_scaled = torch.linalg.solve(B_reg, grad)
+                        relative_gradient = grad_scaled@xtBx - x@grad.T@x
+                    elif regul_type == 'matrix' and grad_type == 'riem':
+                        # Riemannian gradient
+                        B_reg = B + eps_regul * torch.eye(B.size(0), device = B.device)
+                        grad_scaled = torch.linalg.solve(B_reg, grad)
+                        relative_gradient = grad_scaled - x@symm(x.T @ grad)
+                    
                     # If orthogonalization is applied
-                    if omega>0:
-                        n, p = x.shape
-                        Id = torch.eye(p, device=x.device)
-                        if regul_type == 'matvec':
-                            Bx = regul
-                        elif regul_type == 'matrix':
-                            B = regul
-                            Bx = B@x
-                        else:
-                            print('Unknown regul_type=', regul_type)
-                        xtBx = x.T@Bx
-                        normal_direction = Bx@(xtBx - Id)
-                        if grad_type == 'precon':
-                            relative_gradient = 0.5*(grad@(Bx.T@Bx) - Bx@(grad.T @ Bx))
-                        elif regul_type == 'matrix' and grad_type == 'PhiB':
-                            B_reg = B + 1e-6*torch.eye(B.size(0), device=B.device)
-                            grad_scaled = torch.linalg.solve(B_reg, grad)
-                            relative_gradient = grad_scaled@xtBx - x@grad.T@x
-                        landing_direction = relative_gradient + omega * normal_direction
-                        # Take the step with orthogonalization
-                        new_x = x - learning_rate * landing_direction
-                    else: 
-                        # Take the step without orthogonalization
-                        new_x = x - learning_rate * grad
+                    landing_direction = relative_gradient + omega * normal_direction
+                    new_x = x - learning_rate * landing_direction
                     x.copy_(new_x)
         return loss
     

@@ -6,6 +6,7 @@ __all__ = [
     "LandingCCA",
     "LandingICA",
     "RiemannianRollingCCA",
+    "RiemannianRollingICA",
      "compute_mean_std", 
      "loader_to_cov", 
      "cca_closed_form", 
@@ -21,4 +22,5 @@ from .riemannian_generalized_stiefel import RiemannianGeneralizedStiefel
 from .landing_cca import LandingCCA
 from .landing_ica import LandingICA
 from .riem_rolling_cca import RiemannianRollingCCA
+from .riem_rolling_ica import RiemannianRollingICA
 

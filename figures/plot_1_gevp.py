@@ -6,6 +6,7 @@ import cupy as cp
 plt.rcParams.update({'text.usetex' : True})
 
 colormap = plt.cm.Set1
+figsize = figsize = (4, 2)
 
 methods_ids = ['rsd', 'land_R', 'land_precon', 'plam']#, 'land_riem']
 
@@ -34,7 +35,7 @@ optlog['land_riem'] = results['optlog_land_riem']
 obj_true = results['obj_true']
 
 # Objective values plot vs time
-plt.figure(figsize=(4, 3), dpi= 220)
+plt.figure(figsize=figsize, dpi= 220)
 for method_id in methods_ids:
     plt.semilogy(optlog[method_id]['iterations']['time'], optlog[method_id]['iterations']['fx'] - obj_true, label = method_names[method_id],linewidth=3, color=colors[method_id], alpha=0.7)
 plt.legend()
@@ -45,10 +46,9 @@ plt.grid()
 plt.savefig('1_gevp_obj.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
 
 # Objective values plot vs iterations
-plt.figure(figsize=(4, 3), dpi= 220)
+plt.figure(figsize=figsize, dpi= 220)
 for method_id in methods_ids:
     plt.semilogy(optlog[method_id]['iterations']['fx'] - obj_true, label = method_names[method_id],linewidth=3, color=colors[method_id], alpha=0.7)
-plt.legend()
 plt.legend()
 
 x_ = plt.xlabel('Iterations')
@@ -59,11 +59,11 @@ plt.savefig('1_gevp_obj_iter.pdf', bbox_inches='tight', bbox_extra_artists=(x_, 
 
 
 # Distances vs time
-plt.figure(figsize=(4, 3), dpi= 220)
+plt.figure(figsize=figsize, dpi= 220)
 
 for method_id in methods_ids[1:]:
     plt.semilogy(optlog[method_id]['iterations']['time'], optlog[method_id]['iterations']['distance'], label = method_names[method_id],linewidth=3, color=colors[method_id], alpha=0.7)
-plt.legend()
+#plt.legend()
 
 x_ = plt.xlabel('Time (sec.)')
 y_ = plt.ylabel('Distance $\mathcal{N}(x)$')
@@ -71,11 +71,11 @@ plt.grid()
 plt.savefig('1_gevp_dist.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
 
 # Distances vs iterations
-plt.figure(figsize=(4, 3), dpi= 220)
+plt.figure(figsize=figsize, dpi= 220)
 
 for method_id in methods_ids[1:]:
     plt.semilogy(optlog[method_id]['iterations']['distance'], label = method_names[method_id],linewidth=3, color=colors[method_id], alpha=0.7)
-plt.legend()
+#plt.legend()
 
 x_ = plt.xlabel('Iterations')
 y_ = plt.ylabel('Distance $\mathcal{N}(x)$')
@@ -85,7 +85,7 @@ plt.savefig('1_gevp_dist_iter.pdf', bbox_inches='tight', bbox_extra_artists=(x_,
 
 
 # Safe step region
-plt.figure(figsize=(4, 3), dpi= 220)
+plt.figure(figsize=figsize, dpi= 220)
 
 for method_id in methods_ids[1:3]:
     safe_steps = [ele.get() for ele in optlog[method_id]['iterations']['safe_step'] ]
@@ -97,3 +97,26 @@ y_ = plt.ylabel('Safe step-size $\eta(x)$')
 plt.grid()
 plt.savefig('1_gevp_safestep.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
 
+
+# Combined plot
+
+fig, (ax1,ax2) = plt.subplots(nrows=2, sharex=True, subplot_kw=dict(frameon=True), figsize=(4,3), dpi= 220)
+
+# Objective values plot vs time
+for method_id in methods_ids:
+    ax1.semilogy(optlog[method_id]['iterations']['time'], optlog[method_id]['iterations']['fx'] - obj_true, label = method_names[method_id],linewidth=3, color=colors[method_id], alpha=0.7)
+
+y_ = ax1.set_ylabel('Objective value')
+ax1.grid()
+
+for method_id in methods_ids[1:]:
+    ax2.semilogy(optlog[method_id]['iterations']['time'], optlog[method_id]['iterations']['distance'], label = method_names[method_id],linewidth=3, color=colors[method_id], alpha=0.7)
+
+x_ = ax2.set_xlabel('Time (sec.)')
+y_ = ax2.set_ylabel('Distance $\mathcal{N}(x)$')
+ax2.grid()
+
+plt.subplots_adjust(hspace=.1)
+ax1.legend(ncol=1, loc='upper right', columnspacing=.5, handlelength=1)
+
+plt.savefig('1_gevp_combined.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))

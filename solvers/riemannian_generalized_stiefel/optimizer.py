@@ -52,7 +52,7 @@ class RiemannianGeneralizedStiefel(torch.optim.Optimizer):
         nesterov=False,
         omega=0,
         check_type=False,
-        eps_regul = 1e-8,
+        eps_regul = 0,
     ):
         if lr < 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))

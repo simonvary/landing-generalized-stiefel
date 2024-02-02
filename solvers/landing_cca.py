@@ -75,7 +75,7 @@ def LandingCCA(loaderA, loaderB, p = 10, learning_rate = 1e-3, omega = 1,  n_epo
 
         # Start epochs
         for ind, (A, B) in enumerate(zip(loaderA, loaderB)):
-            iteration = iteration + ind
+            iteration = iteration + 1 # used to be + ind
             A, B = A.to(device), B.to(device)
             A = A - meanA
             B = B - meanB

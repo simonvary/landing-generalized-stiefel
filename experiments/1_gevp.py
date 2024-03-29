@@ -27,12 +27,12 @@ cp.random.seed(seed)
 np.random.seed(seed)
 random.seed(seed)
 
-filename = '1_gevp.pkl'
+filename = '1_gevp_rebuttal.pkl'
 
 n = 1000
 p = 500
 
-max_time = 2*60 # in seconds
+max_time = 20 # in seconds
 maxiter = 20000
 
 cond_number = 1e2
@@ -57,7 +57,7 @@ x0 = np.linalg.solve(r, x0.T).T
 
 
 solver_land_R = GeneralizedLanding(A, B, p, maxiter = maxiter, mingradnorm=1e-6,maxtime=max_time)
-x_land_R, optlog_land_R = solver_land_R.solve(0.001, 17000, grad_type='R', x0=x0, step_type='fixed', eps_d = 1)
+x_land_R, optlog_land_R = solver_land_R.solve(0.004, 20000, grad_type='R', x0=x0, step_type='fixed', eps_d = 1)
 
 solver_land_precon = GeneralizedLanding(A, B, p, maxiter = maxiter, mingradnorm=1e-6,maxtime=max_time)
 x_land_precon, optlog_land_precon = solver_land_precon.solve(170, 0.1, grad_type='precon', x0=x0, step_type='fixed', eps_d = 1)
@@ -66,10 +66,10 @@ solver_plam = GeneralizedLanding(A, B, p, maxiter = maxiter, mingradnorm=1e-6,ma
 x_plam, optlog_plam = solver_plam.solve(.05, 200, grad_type='plam', x0=x0, eps_d = None, step_type='fixed')
 
 solver_rsd = RiemmGeneralizedStiefel(A, B, p, maxiter = maxiter, mingradnorm=1e-6,maxtime=max_time)
-x_rsd, optlog_rsd = solver_rsd.solve(eta = .001, step_type = 'fixed', x0=x0)
+x_rsd, optlog_rsd = solver_rsd.solve(eta = .005, step_type = 'fixed', x0=x0)# 0.001
 
 solver_land_riem = GeneralizedLanding(A, B, p, maxiter = maxiter, mingradnorm=1e-6,maxtime=max_time)
-x_land_riem, optlog_land_riem = solver_land_riem.solve(.001, 1, grad_type='riem', x0=x0, step_type='fixed', eps_d = 1)
+x_land_riem, optlog_land_riem = solver_land_riem.solve(.005, 10, grad_type='riem', x0=x0, step_type='fixed', eps_d = 1) # 0.001
 
 
 

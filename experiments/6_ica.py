@@ -55,14 +55,21 @@ AtA = A.T @ A / A.shape[0]
 evals = torch.linalg.eigvals(AtA)
 print(evals[0]/evals[-1])
 
+coef = 4
+coef_land_plam_avg = 1
+coef_rrsd = 2
 per_epoch_log = False
 n_epochs = 5
-lr_rate = 1e-1
-omega = 1
+
+lr_rate = coef*1e-1
+omega = 1 /coef
+
 lr_milestones = [3,4]
 init_batch_size = 10
 
-filename = '6_ica_n10.pkl'
+filename = '6_ica_c'+str(coef)+'_n'+str(n_features)
+filename = '6_ica_cS_n'+str(n_features)
+
 results = {}
 
 
@@ -73,11 +80,18 @@ results['land_precon'] = out_l
 x_la, out_la = LandingICA(loader=dataloader, mixing_true=mixing, p=p, grad_type='precon', averaging=True, learning_rate = lr_rate, omega = omega, regul_type='matrix', n_epochs=n_epochs,device=device, lr_milestones=lr_milestones, per_epoch_log=per_epoch_log, init_batch_size = 10)
 results['land_precon_avg'] = out_la
 
-
+lr_rate = coef_rrsd*1e-1
+omega = 1 /coef_rrsd
 x_r, out_r = RiemannianRollingICA(loader=dataloader, mixing_true=mixing, p=p, averaging=True, learning_rate = lr_rate, n_epochs=n_epochs,device=device, lr_milestones=lr_milestones, per_epoch_log=per_epoch_log,init_batch_size=init_batch_size, eps_regul= 1e-6)
 results['rrsd'] = out_r
 
+coef = coef_land_plam_avg
+lr_rate = coef_land_plam_avg*1e-1
+omega = 1 /coef_land_plam_avg
+x_lplam, out_lplam = LandingICA(loader=dataloader, mixing_true=mixing, p=p, grad_type='plam', averaging=True, learning_rate = lr_rate, omega = omega, regul_type='matrix', n_epochs=n_epochs,device=device, lr_milestones=lr_milestones, per_epoch_log=per_epoch_log, init_batch_size = 10)
+results['land_plam_avg'] = out_lplam
 
-with open('../figures/data/'+filename, 'wb') as handle:
+
+with open('../figures/data/'+filename+'.pkl', 'wb') as handle:
         pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
 

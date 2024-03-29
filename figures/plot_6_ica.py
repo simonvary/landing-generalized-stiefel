@@ -3,26 +3,34 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.ticker as mticker
 
-plt.rcParams.update({'text.usetex' : True})
+#plt.rcParams.update({'text.usetex' : True})
 
 colormap = plt.cm.Set1
-alpha = 1
-methods_ids = ['rrsd', 'land_precon_avg', 'land_precon']
+alpha = .8
+methods_ids = ['rrsd', 'land_plam_avg', 'land_precon_avg', 'land_precon']
 
 ylim_dist = [2*1e-7, 1]
 ylim_amari  = [.8*1e-4, 3]
+ylim_obj = [3.25, 3.75]
 figsize = (4, 1.5)
-xlim_time = None#[-0.05, 1.55]
+xlim_time = [-0.05, 2.35]
 linewidth = 3
 
 method_names = {
     'rrsd' : 'Riem. GD (avg.)',
+    'land_plam_avg' : 'PLAM (avg.)',
     'land_precon_avg' : 'Landing ($\Psi_B(X)$, avg.)',
     'land_precon' : 'Landing ($\Psi_B(X)$, online)'
 }
+coef = 4
+n_features = 10
+
+filename = '6_ica_c'+str(coef)+'_n'+str(n_features)
+filename = '6_ica_cS_n'+str(n_features)
+
 
 #from config import methods_ids, colors, names, line_styles
-with open('data/6_ica_n10.pkl', 'rb') as handle:
+with open('data/'+filename+'.pkl', 'rb') as handle:
     results = pickle.load(handle)
 colors = {}
 for i in range(len(methods_ids)):
@@ -40,12 +48,13 @@ for method_id in methods_ids:
               linewidth=linewidth, color=colors[method_id], alpha=alpha)
 ax=plt.gca()
 ax.yaxis.set_minor_formatter(mticker.ScalarFormatter())
+ax.set_ylim(ylim_obj)
 x_ = plt.xlabel('Time (sec.)')
 y_ = plt.ylabel('Objective value')
 plt.grid()
 plt.legend(ncol=1, loc='upper right', columnspacing=.5, handlelength=2)
 plt.xlim(xlim_time)
-plt.savefig('6_ica_p10_obj.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
+plt.savefig(filename+'_obj.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
 
 # Objective values plot vs iterations
 plt.figure(figsize=figsize, dpi= 220)
@@ -60,7 +69,8 @@ ax.yaxis.set_minor_formatter(mticker.ScalarFormatter())
 x_ = plt.xlabel('Iterations')
 y_ = plt.ylabel('Objective value')
 plt.grid()
-plt.savefig('6_ica_p10_obj_iter.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
+ax.set_ylim(ylim_obj)
+plt.savefig(filename+'_obj_iter.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
 
 
 # Distances vs time
@@ -75,7 +85,7 @@ y_ = plt.ylabel('Distance $\mathcal{N}(x)$')
 plt.ylim(ylim_dist)
 plt.xlim(xlim_time)
 plt.grid()
-plt.savefig('6_ica_p10_dist.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
+plt.savefig(filename+'_dist.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
 
 # Distances vs iterations
 plt.figure(figsize=figsize, dpi= 220)
@@ -88,7 +98,7 @@ x_ = plt.xlabel('Iterations')
 y_ = plt.ylabel('Distance $\mathcal{N}(x)$')
 plt.ylim(ylim_dist)
 plt.grid()
-plt.savefig('6_ica_p10_dist_iter.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
+plt.savefig(filename+'_dist_iter.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
 
 # Amari distances vs time
 plt.figure(figsize=figsize, dpi= 220)
@@ -101,7 +111,7 @@ y_ = plt.ylabel('Amari distance')
 plt.ylim(ylim_amari)
 plt.xlim(xlim_time)
 plt.grid()
-plt.savefig('6_ica_p10_amari_dist.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
+plt.savefig(filename+'_amari_dist.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
 
 # Amari distances vs iterations
 plt.figure(figsize=figsize, dpi=220)
@@ -113,7 +123,7 @@ x_ = plt.xlabel('Iterations')
 y_ = plt.ylabel('Amari distance')
 plt.ylim(ylim_amari)
 plt.grid()
-plt.savefig('6_ica_p10_amari_dist_iter.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
+plt.savefig(filename+'_amari_dist_iter.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
 
 
 # Combined plot
@@ -126,6 +136,8 @@ for method_id in methods_ids:
     ax1.semilogy(out['time'],(np.array(out['fx'])), label = method_names[method_id],
               linewidth=linewidth, color=colors[method_id], alpha=alpha)
 ax1.yaxis.set_minor_formatter(mticker.ScalarFormatter())
+ax1.set_ylim(ylim_obj)
+ax1.set_xlim(xlim_time)
 y_ = ax1.set_ylabel('Objective value')
 ax1.grid()
 
@@ -137,7 +149,7 @@ for method_id in methods_ids:
 y_ = ax2.set_ylabel('Amari distance')
 ax2.grid()
 ax2.set_ylim(ylim_amari)
-
+ax2.set_xlim(xlim_time)
 #plt.tick_params('x', labelsize = 6)
 
 for method_id in methods_ids:
@@ -148,8 +160,9 @@ ax3.grid()
 x_ = ax3.set_xlabel('Time (sec.)')
 y_ = ax3.set_ylabel('Distance $\mathcal{N}(x)$')
 ax3.set_ylim(ylim_dist)
+ax3.set_xlim(xlim_time)
 
 ax2.legend(ncol=1, loc='upper right', columnspacing=.5, handlelength=1)
 
 plt.subplots_adjust(hspace=.1)
-plt.savefig('6_ica_p10_combined.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
+plt.savefig(filename+'_combined.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))

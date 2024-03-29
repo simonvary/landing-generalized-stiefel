@@ -10,6 +10,16 @@ figsize = figsize = (4, 2)
 
 methods_ids = ['rsd', 'land_R', 'land_precon', 'plam']#, 'land_riem']
 
+
+coef = 1
+cond_number = 1e2
+
+ylim_obj = None#[1e-1, 3*1e4]
+ylim_dist = [1e-16, 1e1]
+xlim_time = None
+
+filename = '1_gevp_c'+str(coef)+'_cond'+str(cond_number)
+
 method_names = {
     'rsd' : 'Riem. grad. descent',
     'land_R' : 'Landing with $\Psi^\mathrm{R}_B(X)$',
@@ -19,7 +29,7 @@ method_names = {
 }
 
 #from config import methods_ids, colors, names, line_styles
-with open('data/1_gevp.pkl', 'rb') as handle:
+with open('data/'+filename+'.pkl', 'rb') as handle:
     results = pickle.load(handle)
 
 colors = {}
@@ -43,7 +53,7 @@ plt.legend()
 x_ = plt.xlabel('Time (sec.)')
 y_ = plt.ylabel('Objective value')
 plt.grid()
-plt.savefig('1_gevp_obj.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
+plt.savefig(filename+'_obj.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
 
 # Objective values plot vs iterations
 plt.figure(figsize=figsize, dpi= 220)
@@ -54,7 +64,7 @@ plt.legend()
 x_ = plt.xlabel('Iterations')
 y_ = plt.ylabel('Objective value')
 plt.grid()
-plt.savefig('1_gevp_obj_iter.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
+plt.savefig(filename+'_obj_iter.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
 
 
 
@@ -68,7 +78,7 @@ for method_id in methods_ids[1:]:
 x_ = plt.xlabel('Time (sec.)')
 y_ = plt.ylabel('Distance $\mathcal{N}(x)$')
 plt.grid()
-plt.savefig('1_gevp_dist.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
+plt.savefig(filename+'_dist.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
 
 # Distances vs iterations
 plt.figure(figsize=figsize, dpi= 220)
@@ -80,7 +90,7 @@ for method_id in methods_ids[1:]:
 x_ = plt.xlabel('Iterations')
 y_ = plt.ylabel('Distance $\mathcal{N}(x)$')
 plt.grid()
-plt.savefig('1_gevp_dist_iter.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
+plt.savefig(filename+'_dist_iter.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
 
 
 
@@ -95,7 +105,7 @@ plt.legend()
 x_ = plt.xlabel('Time (sec.)')
 y_ = plt.ylabel('Safe step-size $\eta(x)$')
 plt.grid()
-plt.savefig('1_gevp_safestep.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
+plt.savefig(filename+'_safestep.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
 
 
 # Combined plot
@@ -104,7 +114,7 @@ fig, (ax1,ax2) = plt.subplots(nrows=2, sharex=True, subplot_kw=dict(frameon=True
 
 # Objective values plot vs time
 for method_id in methods_ids:
-    ax1.semilogy(optlog[method_id]['iterations']['time'], optlog[method_id]['iterations']['fx'] - obj_true, label = method_names[method_id],linewidth=3, color=colors[method_id], alpha=0.7)
+    ax1.semilogy(optlog[method_id]['iterations']['time'], np.abs((optlog[method_id]['iterations']['fx'] - obj_true)/obj_true), label = method_names[method_id],linewidth=3, color=colors[method_id], alpha=0.7)
 
 y_ = ax1.set_ylabel('Objective value')
 ax1.grid()
@@ -116,7 +126,13 @@ x_ = ax2.set_xlabel('Time (sec.)')
 y_ = ax2.set_ylabel('Distance $\mathcal{N}(x)$')
 ax2.grid()
 
+ax1.set_ylim(ylim_obj)
+ax2.set_ylim(ylim_dist)
+ax1.set_xlim(xlim_time)
+ax2.set_xlim(xlim_time)
+
+
 plt.subplots_adjust(hspace=.1)
 ax1.legend(ncol=1, loc='upper right', columnspacing=.5, handlelength=1)
 
-plt.savefig('1_gevp_combined.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
+plt.savefig(filename+'_combined.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))

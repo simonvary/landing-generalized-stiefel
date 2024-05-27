@@ -27,7 +27,7 @@ def dataset_simulated_ica(n_samples = 10000, n_features = 10, p = 10, batch_size
     rng = np.random.RandomState(random_state)
     sources = st_dev*rng.laplace(size=(n_samples, n_features))
     q_haar, _ = np.linalg.qr(rng.randn(p, n_features))
-    mixing = q_haar @ q_haar.T
+    mixing = q_haar #@ q_haar.T
     #X = np.dot(sources, mixing.T)
     #W = np.linalg.pinv(sqrtm(X.T.dot(X) / n_samples))
     X = np.dot(sources, mixing.T)
@@ -92,6 +92,7 @@ x_lplam, out_lplam = LandingICA(loader=dataloader, mixing_true=mixing, p=p, grad
 results['land_plam_avg'] = out_lplam
 
 
+print(filename + '.pkl')
 with open('../figures/data/'+filename+'.pkl', 'wb') as handle:
         pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
 

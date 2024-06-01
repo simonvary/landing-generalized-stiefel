@@ -30,10 +30,15 @@ cp.random.seed(seed)
 np.random.seed(seed)
 random.seed(seed)
 
-filename = '4_gevp.pkl'
-
 n = 1000
 p = 500
+
+max_time = 120 # in seconds
+maxiter = 10000
+cond_number = 1e2
+coef = 1
+
+filename = '4_gevp_c'+str(coef)+'_cond'+str(cond_number)
 
 max_time = 120 # in seconds
 maxiter = 20000
@@ -46,7 +51,6 @@ omega_vars = np.linspace(1-omega_var_max, 1+omega_var_max, num=n_omega)
 #eta_vars = [1/4, 1/2 , 1, 2, 4]
 eta_vars = np.linspace(1-eta_var_max, 1+eta_var_max, num=n_omega)
 
-cond_number = 1e2
 
 _,_,A = generate_spd(n, type='equidistant', cond_number= cond_number)
 _,_,B = generate_spd(n, type = 'exponential', cond_number= cond_number)
@@ -71,16 +75,16 @@ optlogs = []
 for i, (eta_var, omega_var) in enumerate(product(eta_vars, omega_vars)):
        optlogs.append({})
        solver_plam = GeneralizedLanding(A, B, p, maxiter = maxiter, mingradnorm=1e-6,maxtime=max_time)
-       x_plam, optlog_plam = solver_plam.solve(0.05*eta_var, 200*omega_var, grad_type='plam', x0=x0, step_type='fixed')
+       x_plam, optlog_plam = solver_plam.solve(0.05*coef*eta_var, 200/coef*omega_var, grad_type='plam', x0=x0, step_type='fixed')
        optlogs[i]['plam'] = optlog_plam
-       optlogs[i]['plam_omega'] = 200*omega_var
-       optlogs[i]['plam_eta'] = .05*eta_var
+       optlogs[i]['plam_omega'] = 200/coef*omega_var
+       optlogs[i]['plam_eta'] = .05*coef*eta_var
        
        solver_land_precon = GeneralizedLanding(A, B, p, maxiter = maxiter, mingradnorm=1e-6,maxtime=max_time)
-       x_land_precon, optlog_land_precon = solver_land_precon.solve(100*eta_var, 0.1*omega_var, grad_type='precon', x0=x0, step_type='fixed')
+       x_land_precon, optlog_land_precon = solver_land_precon.solve(170*coef*eta_var, 0.1/coef*omega_var, grad_type='precon', x0=x0, step_type='fixed')
        optlogs[i]['land_precon'] = optlog_land_precon
-       optlogs[i]['land_precon_omega'] = 0.1*omega_var
-       optlogs[i]['land_precon_eta'] = 100*eta_var
+       optlogs[i]['land_precon_omega'] = 0.1/coef*omega_var
+       optlogs[i]['land_precon_eta'] = 170*coef*eta_var
 
        optlogs[i]['omega_var'] = omega_var
        optlogs[i]['eta_var'] = omega_var

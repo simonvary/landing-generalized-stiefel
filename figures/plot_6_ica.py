@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.ticker as mticker
 
-#plt.rcParams.update({'text.usetex' : True})
+plt.rcParams.update({'text.usetex' : True})
 
 colormap = plt.cm.Set1
 alpha = .8
@@ -28,7 +28,7 @@ n_features = 10
 filename = '6_ica_c'+str(coef)+'_n'+str(n_features)
 filename = '6_ica_cS_n'+str(n_features)
 
-
+print(filename+'.pkl')
 #from config import methods_ids, colors, names, line_styles
 with open('data/'+filename+'.pkl', 'rb') as handle:
     results = pickle.load(handle)

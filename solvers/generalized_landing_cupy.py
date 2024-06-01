@@ -109,15 +109,16 @@ class GeneralizedLanding(IterativeSolver):
             landing_direction = relative_gradient + omega * normal_direction
 
             if step_type == 'fixed':
+                eta_now = eta
                 if eps_d:
                     d = cp.linalg.norm(xtBx - self.Id)
                     n = cp.linalg.norm(normal_direction)
                     l = cp.linalg.norm(landing_direction)
                     safe_step = self._safe_step_size( d, n, l, omega, Ln, eps_d)
-                    #eta = min(eta, safe_step)
+                    eta_now = min(eta, safe_step)
                 else:
                     safe_step = 0
-                x = x - eta*landing_direction
+                x = x - eta_now*landing_direction
             elif step_type == 'lsearch':
                 df0 = cp.inner(-landing_direction.flatten(),egrad.flatten())
                 x, _, eta, lsearch_it = self._line_search(self.B, x, -landing_direction, eta, df0, safe_step =safe_step)

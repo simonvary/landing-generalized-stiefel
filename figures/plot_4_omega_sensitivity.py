@@ -2,7 +2,7 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 
-plt.rcParams.update({'text.usetex' : True})
+#plt.rcParams.update({'text.usetex' : True})
 
 colormap = plt.cm.Set1
 
@@ -16,8 +16,15 @@ method_names = {
     'land_riem' : 'Landing with $\mathrm{grad}_{\mathrm{St}_B} f(X)$',
 }
 
+max_time = 120 # in seconds
+maxiter = 10000
+cond_number = 1e2
+coef = 1
+
+filename = '4_gevp_c'+str(coef)+'_cond'+str(cond_number)
+
 #from config import methods_ids, colors, names, line_styles
-with open('data/4_gevp.pkl', 'rb') as handle:
+with open('data/' + filename +  '.pkl', 'rb') as handle:
     results = pickle.load(handle)
 
 colors = {}
@@ -48,7 +55,7 @@ plt.ylim([1e-16, 1e4])
 x_ = plt.xlabel('Time (sec.)')
 y_ = plt.ylabel('Objective value')
 plt.grid()
-plt.savefig('4_omega_sensitivity_obj.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
+plt.savefig(filename + '_obj.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
 
 # Distances vs time
 plt.figure(figsize=(4, 3), dpi= 220)
@@ -65,7 +72,7 @@ plt.ylim([1e-16, 1e4])
 x_ = plt.xlabel('Time (sec.)')
 y_ = plt.ylabel('Distance $\mathcal{N}(x)$')
 plt.grid()
-plt.savefig('4_omega_sensitivity_dist.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
+plt.savefig(filename + '_dist.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
 
 
 # Distances vs time
@@ -83,4 +90,4 @@ plt.ylim([1e-16, 1e4])
 x_ = plt.xlabel('Time (1 + sec.)')
 y_ = plt.ylabel('Distance $\mathcal{N}(x)$')
 plt.grid()
-plt.savefig('4_omega_sensitivity_dist_loglog.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))
+plt.savefig(filename + '_dist_loglog.pdf', bbox_inches='tight', bbox_extra_artists=(x_, y_))

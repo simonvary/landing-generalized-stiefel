@@ -162,6 +162,8 @@ class LandingGeneralizedStiefel(torch.optim.Optimizer):
                         B_reg = B + eps_regul * torch.eye(B.size(0), device = B.device)
                         grad_scaled = torch.linalg.solve(B_reg, grad)
                         relative_gradient = grad_scaled - x@symm(x.T @ grad)
+                    elif regul_type == "matrix" and grad_type == 'plam':
+                         relative_gradient = grad - 0.5*Bx@(x.T@grad + grad.T@x)
                     
                     # If orthogonalization is applied
                     landing_direction = relative_gradient + omega * normal_direction

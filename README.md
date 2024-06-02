@@ -6,6 +6,8 @@ The algorithm is implemented as a PyTorch optimizer; see `solvers/landing_genera
 
 You can find the paper [here](https://arxiv.org/abs/2405.01702).
 
+<img alt="Landing diagram" src="https://github.com/simonvary/landing-generalized-stiefel/blob/master/diagram.png?raw=true" width=50% height=50%>
+
 ## Figures
 
 To reproduce the plots using the provided convergence data, you can use the `makefile` in the folder `figures/`.

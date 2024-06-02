@@ -1,8 +1,8 @@
-# Landing algorithm on the random generalized Stiefel manifold
+# Landing on the random generalized Stiefel manifold
 
 This repository contains the code for the landing algorithm under the generalized Stiefel manifold constraint without the use of retractions. 
 
-The algorithm is implemented as a PyTorch optimizer; see `landing-stiefel/landing_stiefel/optimizer.py`.
+The algorithm is implemented as a PyTorch optimizer; see `solvers/landing_generalized_stiefel/optimizer.py`.
 
 You can find the paper [here](https://arxiv.org/abs/2405.01702).
 

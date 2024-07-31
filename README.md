@@ -16,11 +16,16 @@ To reproduce the plots using the provided convergence data, you can use the `mak
 
 If you use this code please cite:
 ```
-@misc{Vary2024Optimization,
-  title = {{Optimization without retraction on the random generalized Stiefel manifold}},
-  author = {Vary, Simon and Ablin, Pierre and Gao, Bin and Absil, P.-A.},
-  year = {2024},
-  month = may,
-  eprint = {arXiv:2405.01702}
+
+@InProceedings{Vary2024Optimization,
+  title = 	 {Optimization without Retraction on the Random Generalized Stiefel Manifold},
+  author =       {Vary, Simon and Ablin, Pierre and Gao, Bin and Absil, Pierre-Antoine},
+  booktitle = 	 {Proceedings of the 41st International Conference on Machine Learning},
+  pages = 	 {49226--49248},
+  year = 	 {2024},
+  volume = 	 {235},
+  series = 	 {Proceedings of Machine Learning Research},
+  publisher = {PMLR}
 }
+
 ```
